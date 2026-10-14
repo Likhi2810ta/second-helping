@@ -128,3 +128,27 @@
     @apply font-sans;
   }
 }
+/* ===== Second Helping design tokens ===== */
+:root {
+  --background: #F6F8F3;
+  --foreground: #14201A;
+  --primary: #2F7D4F;
+  --primary-foreground: #FFFFFF;
+  --muted-foreground: #5E6F64;
+  --destructive: #D9482B;
+  --ring: #2F7D4F;
+}
+
+@theme inline {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+
+  --color-green-100: #E4F1E6;
+  --color-green-600: #2F7D4F;
+  --color-green-700: #256B42;
+  --color-green-900: #0F2A1B;
+  --color-ink: #14201A;
+  --color-bg: #F6F8F3;
+  --color-warn: #E8A317;
+  --color-danger: #D9482B;
+}
