@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+
+  --color-green-100: #E4F1E6;
+  --color-green-600: #2F7D4F;
+  --color-green-700: #256B42;
+  --color-green-900: #0F2A1B;
+  --color-ink: #14201A;
+  --color-muted: #5E6F64;
+  --color-bg: #F6F8F3;
+  --color-warn: #E8A317;
+  --color-danger: #D9482B;
+}
+
+@layer base {
+  body {
+    @apply bg-bg font-sans text-ink antialiased;
+  }
+  h1, h2, h3, h4 {
+    @apply font-heading;
+  }
+}
