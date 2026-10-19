@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useProfile } from '../hooks/useProfile'
 import type { Profile } from '../types'
+import VerificationBanner from './VerificationBanner'
 
 type Role = Profile['role']
 
@@ -62,6 +63,7 @@ export default function AppLayout() {
       </header>
 
       <div className="mx-auto max-w-6xl p-4 sm:p-6">
+        <VerificationBanner />
         <Outlet />
       </div>
     </div>
