@@ -1,35 +1,31 @@
+import CtaBanner from '../components/marketing/CtaBanner'
+import Events from '../components/marketing/Events'
+import FeatureStrip from '../components/marketing/FeatureStrip'
+import Footer from '../components/marketing/Footer'
+import Hero from '../components/marketing/Hero'
+import HowItWorks from '../components/marketing/HowItWorks'
+import ImpactBand from '../components/marketing/ImpactBand'
+import LiveFood from '../components/marketing/LiveFood'
+import Navbar from '../components/marketing/Navbar'
+import Newsletter from '../components/marketing/Newsletter'
+import StoriesCarousel from '../components/marketing/StoriesCarousel'
+
 export default function Home() {
-  const swatches = [
-    'bg-green-100',
-    'bg-green-600',
-    'bg-green-700',
-    'bg-green-900',
-    'bg-warn',
-    'bg-danger',
-  ]
-
   return (
-    <main className="min-h-screen p-10">
-      <h1 className="text-4xl font-bold text-green-900">Second Helping</h1>
-      <p className="mt-2 text-muted">Surplus food, shared with people who need it.</p>
-
-      <div className="mt-6 flex gap-3">
-        <button className="rounded-full bg-green-600 px-5 py-2 font-semibold text-white hover:bg-green-700">
-          Primary
-        </button>
-        <button className="rounded-full border border-green-600 px-5 py-2 font-semibold text-green-700">
-          Outline
-        </button>
-        <button className="rounded-full bg-danger px-5 py-2 font-semibold text-white">
-          Danger
-        </button>
-      </div>
-
-      <div className="mt-8 flex gap-2">
-        {swatches.map((c) => (
-          <div key={c} className={`h-16 w-16 rounded-lg ${c}`} />
-        ))}
-      </div>
-    </main>
+    <>
+      <Navbar />
+      <main>
+        <Hero />
+        <FeatureStrip />
+        <HowItWorks />
+        <LiveFood />
+        <ImpactBand />
+        <StoriesCarousel />
+        <CtaBanner />
+        <Events />
+        <Newsletter />
+      </main>
+      <Footer />
+    </>
   )
 }

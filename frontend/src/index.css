@@ -35,3 +35,14 @@ html {
 [id] {
   scroll-margin-top: 5rem; /* keeps section titles clear of the sticky navbar */
 }
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+[id] {
+  scroll-margin-top: 5rem; /* keeps section titles clear of the sticky navbar */
+}

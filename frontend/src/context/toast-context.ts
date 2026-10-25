@@ -1,0 +1,6 @@
+import { createContext } from 'react'
+
+export type ToastKind = 'success' | 'error'
+export type ShowToast = (message: string, kind?: ToastKind) => void
+
+export const ToastContext = createContext<ShowToast | null>(null)
