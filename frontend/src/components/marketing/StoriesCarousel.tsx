@@ -89,6 +89,7 @@ export default function StoriesCarousel() {
           <div
             ref={track}
             tabIndex={0}
+            role="group"
             aria-label="Story cards, scroll sideways"
             className="mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4"
           >
