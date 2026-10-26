@@ -7,6 +7,7 @@ import Home from './pages/Home'
 
 // Only the landing page is loaded up front. Every other screen is downloaded
 // the first time someone visits it, which keeps the home page fast.
+const Post = lazy(() => import('./pages/Post'))
 const ComingSoon = lazy(() => import('./pages/ComingSoon'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
@@ -39,8 +40,8 @@ export default function App() {
             <Route path="/history" element={<ComingSoon title="History" />} />
 
             <Route element={<ProtectedRoute roles={['donor']} />}>
-              <Route path="/post" element={<ComingSoon title="Post food" />} />
-              <Route path="/my-listings" element={<ComingSoon title="My listings" />} />
+            <Route path="/post" element={<Post />} />
+            <Route path="/my-listings" element={<ComingSoon title="My listings" />} />
             </Route>
 
             <Route element={<ProtectedRoute roles={['receiver']} />}>

@@ -42,6 +42,8 @@ type Props = { value: LatLng | null; onChange: (p: LatLng) => void }
 export default function LocationPicker({ value, onChange }: Props) {
   const [focus, setFocus] = useState<LatLng | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  // Start where the pin already is (for example the organisation's location)
+  const [start] = useState<LatLng>(() => value ?? DEFAULT_CENTER)
 
   function locateMe() {
     if (!navigator.geolocation) {
@@ -70,8 +72,8 @@ export default function LocationPicker({ value, onChange }: Props) {
       </div>
 
       <MapContainer
-        center={[DEFAULT_CENTER.lat, DEFAULT_CENTER.lng]}
-        zoom={12}
+        center={[start.lat, start.lng]}
+        zoom={value ? 15 : 12}
         className="relative z-0 mt-2 h-64 w-full rounded-xl ring-1 ring-green-100"
       >
         <TileLayer
