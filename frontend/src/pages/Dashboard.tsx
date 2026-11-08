@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import DonorDashboard from '../components/DonorDashboard'
 import RoleGate from '../components/RoleGate'
 import { useProfile } from '../hooks/useProfile'
 
@@ -27,6 +28,10 @@ function ActionCard({ to, title, text, locked = false }: CardProps) {
 
 export default function Dashboard() {
   const { profile, organization } = useProfile()
+
+  // Donors get their own dashboard with live numbers
+  if (profile?.role === 'donor') return <DonorDashboard />
+
   const verified = organization?.status === 'verified'
 
   return (
@@ -37,11 +42,6 @@ export default function Dashboard() {
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <RoleGate role="donor">
-          <ActionCard to="/post" title="Post surplus food" text="List food that is ready to be collected." locked={!verified} />
-          <ActionCard to="/my-listings" title="My listings" text="See, edit and confirm your food listings." />
-        </RoleGate>
-
         <RoleGate role="receiver">
           <ActionCard to="/find" title="Find food nearby" text="See available food on a map and request it." locked={!verified} />
           <ActionCard to="/pickups" title="My pickups" text="Track your requests and collections." />

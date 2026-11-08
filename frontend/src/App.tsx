@@ -16,6 +16,7 @@ const NotFound = lazy(() => import('./pages/NotFound'))
 const Onboarding = lazy(() => import('./pages/Onboarding'))
 const Register = lazy(() => import('./pages/Register'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
+const MyListings = lazy(() => import('./pages/MyListings'))
 
 export default function App() {
   return (
@@ -41,7 +42,7 @@ export default function App() {
 
             <Route element={<ProtectedRoute roles={['donor']} />}>
             <Route path="/post" element={<Post />} />
-            <Route path="/my-listings" element={<ComingSoon title="My listings" />} />
+            <Route path="/my-listings" element={<MyListings />} />
             </Route>
 
             <Route element={<ProtectedRoute roles={['receiver']} />}>

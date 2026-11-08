@@ -1,7 +1,7 @@
 -- Development seed data. Safe to run again: it clears its own rows first.
 -- Every test account uses the password:  Password123!
-
 -- 0. Clean up previous seed data
+delete from audit_log;
 delete from auth.users where email like '%@secondhelping.test';
 truncate stories, events;
 
