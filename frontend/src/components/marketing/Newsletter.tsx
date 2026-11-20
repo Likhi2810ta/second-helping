@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { Send } from 'lucide-react'
+import { Mail, Send } from 'lucide-react'
 import { useToast } from '../../hooks/useToast'
-import { supabase } from '../../lib/supabase'
+import { api } from '../../lib/api'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -21,30 +21,37 @@ export default function Newsletter() {
       return
     }
 
-    setBusy(true)
-    const { error: insertError } = await supabase.from('subscribers').insert({ email: value })
-    setBusy(false)
-
-    // 23505 = this email is already on the list. We show the same friendly message
+    // The API answers the same way for emails already on the list,
     // so nobody can use this form to find out who is subscribed.
-    if (insertError && insertError.code !== '23505') {
+    setBusy(true)
+    try {
+      await api('/api/subscribers', { method: 'POST', body: { email: value }, auth: false })
+    } catch {
+      setBusy(false)
       setError('Something went wrong. Please try again.')
       return
     }
+    setBusy(false)
 
     setEmail('')
     toast('Thanks for subscribing!')
   }
 
   return (
-    <section aria-label="Newsletter" className="bg-green-100 px-4 py-16">
-      <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-bold text-green-900">Stay in the loop</h2>
-        <p className="mt-1 text-green-900/80">
-          Get occasional updates on our impact, new events and ways to help.
-        </p>
+    <section aria-label="Newsletter" className="px-4 pb-20">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 rounded-3xl bg-green-50 p-6 ring-1 ring-green-100 sm:p-8 lg:flex-row lg:items-center">
+        <div className="flex flex-1 items-center gap-4">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-green-600 shadow-sm">
+            <Mail size={24} aria-hidden="true" />
+          </span>
+          <div>
+            <h2 className="text-xl font-bold text-ink">Stay updated</h2>
+            <p className="text-sm text-muted">Occasional news on our impact, new events and ways to help.</p>
+          </div>
+        </div>
 
-        <form onSubmit={onSubmit} noValidate className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <div className="w-full lg:max-w-md">
+        <form onSubmit={onSubmit} noValidate className="flex flex-col gap-3 sm:flex-row">
           <label htmlFor="newsletter-email" className="sr-only">
             Email address
           </label>
@@ -57,12 +64,12 @@ export default function Newsletter() {
             onChange={(e) => setEmail(e.target.value)}
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? 'newsletter-error' : undefined}
-            className="w-full rounded-full border border-muted/40 bg-white px-5 py-3 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-600/20"
+            className="w-full rounded-full border border-green-200 bg-white px-5 py-3 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-600/20"
           />
           <button
             type="submit"
             disabled={busy}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-60"
           >
             {busy ? 'Subscribing…' : 'Subscribe'} <Send size={16} aria-hidden="true" />
           </button>
@@ -73,6 +80,7 @@ export default function Newsletter() {
             {error}
           </p>
         )}
+        </div>
       </div>
     </section>
   )

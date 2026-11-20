@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
 import type { Database } from '../types/database'
+import { useApi } from './useApi'
 
 type Listing = Database['public']['Tables']['listings']['Row']
 
@@ -17,37 +16,8 @@ export type PickupRequestInfo = {
 
 export type MyListing = Listing & { pickup_requests: PickupRequestInfo[] }
 
+// The donor's own listings with their pickup requests
 export function useMyListings(orgId: string | undefined) {
-  const [data, setData] = useState<MyListing[] | null>(null)
-  const [error, setError] = useState(false)
-  const [version, setVersion] = useState(0)
-
-  useEffect(() => {
-    if (!orgId) return
-    let cancelled = false
-    supabase
-      .from('listings')
-      .select(
-        '*, pickup_requests(id, status, message, eta_minutes, requested_at, completed_at, rating, organizations(name))'
-      )
-      .eq('donor_org_id', orgId)
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (cancelled) return
-        if (error) {
-          setError(true)
-          return
-        }
-        setError(false)
-        setData((data ?? []) as unknown as MyListing[])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [orgId, version])
-
-  // Fetch again (the list stays on screen while it refreshes)
-  const reload = useCallback(() => setVersion((v) => v + 1), [])
-
-  return { data, error, loading: !data && !error, reload }
+  const { data, error, loading, reload } = useApi<MyListing[]>(orgId ? '/api/listings/mine' : null)
+  return { data, error, loading, reload }
 }

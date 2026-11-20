@@ -9,6 +9,7 @@ import { useProfile } from '../hooks/useProfile'
 import { useToast } from '../hooks/useToast'
 import { parsePoint } from '../lib/geo'
 import { reverseGeocode } from '../lib/geocode'
+import { api, messageOf } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import { errorBox, noticeBox, primaryBtn } from '../lib/ui'
 import { listingSchema, type ListingInput } from '../lib/validators'
@@ -40,11 +41,6 @@ const durations = [
   { value: 12, label: '12 hours' },
   { value: 24, label: '24 hours' },
 ]
-
-// When the food stops being safe to eat, as a timestamp
-function expiryIn(hours: number) {
-  return new Date(Date.now() + hours * 3600e3).toISOString()
-}
 
 function ErrorText({ message }: { message?: string }) {
   if (!message) return null
@@ -128,22 +124,26 @@ export default function ListingForm() {
       }
     }
 
-    // 2. Create the listing
-    const { error } = await supabase.from('listings').insert({
-      donor_org_id: organization.id,
-      title: values.title.trim(),
-      description: values.description?.trim() || null,
-      category: values.category,
-      diet: values.diet,
-      portions: values.portions,
-      photo_path: photoPath,
-      expires_at: expiryIn(values.hoursValid),
-      address: values.address.trim(),
-      location: `SRID=4326;POINT(${position.lng} ${position.lat})`,
-      pickup_note: values.pickup_note?.trim() || null,
-    })
-    if (error) {
-      setSubmitError(error.message)
+    // 2. Create the listing (the API sets the expiry time and the map point)
+    try {
+      await api('/api/listings', {
+        method: 'POST',
+        body: {
+          title: values.title.trim(),
+          description: values.description?.trim() || null,
+          category: values.category,
+          diet: values.diet,
+          portions: values.portions,
+          photo_path: photoPath,
+          hours_valid: values.hoursValid,
+          address: values.address.trim(),
+          lat: position.lat,
+          lng: position.lng,
+          pickup_note: values.pickup_note?.trim() || null,
+        },
+      })
+    } catch (e) {
+      setSubmitError(messageOf(e))
       return
     }
 

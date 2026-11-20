@@ -1,0 +1,7 @@
+# Python packages for the API on Vercel (see api/index.py).
+# Keep in step with backend/requirements.txt (minus the local server and test tools).
+fastapi>=0.115,<1
+httpx>=0.27,<1
+pydantic>=2.7,<3
+pydantic-settings>=2.3,<3
+PyJWT[crypto]>=2.8,<3

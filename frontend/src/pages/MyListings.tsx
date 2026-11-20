@@ -1,9 +1,12 @@
-import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom' // changed: added useSearchParams
+import { Link, useSearchParams } from 'react-router-dom'
+import { ClipboardList, PlusCircle } from 'lucide-react'
+import EmptyState from '../components/EmptyState'
 import MyListingCard from '../components/MyListingCard'
+import PageHeader from '../components/PageHeader'
 import { useMyListings, type MyListing } from '../hooks/useMyListings'
 import { useNow } from '../hooks/useNow'
 import { useProfile } from '../hooks/useProfile'
+import { solidPill, tabClass } from '../lib/ui'
 
 type Status = MyListing['status']
 
@@ -28,10 +31,10 @@ export default function MyListings() {
   const { organization } = useProfile()
   const now = useNow()
   const { data, error, loading, reload } = useMyListings(organization?.id)
-  const [params] = useSearchParams() // changed: reads ?tab=... from the web address
-  const [tabKey, setTabKey] = useState(() => params.get('tab') ?? 'live') // changed
-
-  const tab = tabs.find((t) => t.key === tabKey) ?? tabs[0]
+  // The open tab lives in the web address (?tab=requested), so links and Back work
+  const [params, setParams] = useSearchParams()
+  const tab = tabs.find((t) => t.key === params.get('tab')) ?? tabs[0]
+  const setTabKey = (key: string) => setParams(key === 'live' ? {} : { tab: key }, { replace: true })
   const all = data ?? []
   const visible = all.filter((l) => tab.match(l.status))
   // Food that expires soonest goes first on the Live tab
@@ -39,17 +42,18 @@ export default function MyListings() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-green-900">My listings</h1>
-        <Link
-          to="/post"
-          className="rounded-full bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700"
-        >
-          Post food
-        </Link>
-      </div>
+      <PageHeader
+        eyebrow="Donor"
+        title="My listings"
+        subtitle="Answer requests, confirm pickups and keep track of what you shared."
+        action={
+          <Link to="/post" className={solidPill}>
+            <PlusCircle size={18} aria-hidden="true" /> Post food
+          </Link>
+        }
+      />
 
-      <div role="group" aria-label="Filter listings" className="mt-6 flex flex-wrap gap-2">
+      <div role="group" aria-label="Filter listings" className="mt-8 flex flex-wrap gap-2">
         {tabs.map((t) => {
           const count = all.filter((l) => t.match(l.status)).length
           const active = t.key === tab.key
@@ -59,9 +63,7 @@ export default function MyListings() {
               type="button"
               aria-pressed={active}
               onClick={() => setTabKey(t.key)}
-              className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                active ? 'bg-green-600 text-white' : 'bg-white text-green-900 ring-1 ring-green-100 hover:bg-green-100'
-              }`}
+              className={tabClass(active)}
             >
               {t.label} ({count})
             </button>
@@ -73,7 +75,7 @@ export default function MyListings() {
         {loading && (
           <div aria-busy="true" className="space-y-4">
             {[0, 1].map((i) => (
-              <div key={i} className="h-40 animate-pulse rounded-2xl bg-green-100" />
+              <div key={i} className="h-40 animate-pulse rounded-3xl bg-green-100/60" />
             ))}
           </div>
         )}
@@ -81,14 +83,17 @@ export default function MyListings() {
         {error && <p className="text-danger">We could not load your listings. Please refresh the page.</p>}
 
         {data && visible.length === 0 && (
-          <div className="rounded-2xl bg-white p-8 text-center ring-1 ring-green-100">
-            <p className="text-muted">{tab.empty}</p>
-            {tab.key === 'live' && (
-              <Link to="/post" className="mt-3 inline-block font-semibold text-green-700 underline">
-                Post your first listing
-              </Link>
-            )}
-          </div>
+          <EmptyState
+            icon={ClipboardList}
+            title={tab.empty}
+            action={
+              tab.key === 'live' ? (
+                <Link to="/post" className={solidPill}>
+                  Post a listing
+                </Link>
+              ) : undefined
+            }
+          />
         )}
 
         {visible.map((listing) => (

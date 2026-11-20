@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
+import { HandHeart, Store, type LucideIcon } from 'lucide-react'
 import AuthCard from '../components/AuthCard'
 import Field from '../components/Field'
 import { useProfile } from '../hooks/useProfile'
@@ -8,14 +9,16 @@ import { errorBox, linkText, noticeBox, primaryBtn } from '../lib/ui'
 
 type Role = 'donor' | 'receiver'
 
-const roles: { value: Role; title: string; text: string }[] = [
-  { value: 'donor', title: 'Donor', text: 'I have surplus food to give' },
-  { value: 'receiver', title: 'Receiver', text: 'I collect food for people in need' },
+const roles: { value: Role; title: string; text: string; icon: LucideIcon }[] = [
+  { value: 'donor', title: 'Donor', text: 'I have surplus food to give', icon: Store },
+  { value: 'receiver', title: 'Receiver', text: 'I collect food for people in need', icon: HandHeart },
 ]
 
 export default function Register() {
   const { user } = useProfile()
-  const [role, setRole] = useState<Role>('donor')
+  const [params] = useSearchParams()
+  // "Join as a receiver" links open the form with that role picked
+  const [role, setRole] = useState<Role>(() => (params.get('role') === 'receiver' ? 'receiver' : 'donor'))
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -60,29 +63,41 @@ export default function Register() {
   }
 
   return (
-    <AuthCard title="Create your account" subtitle="Join Second Helping in a minute.">
+    <AuthCard title="Create your account" subtitle="Join Second Helping in a minute. It is free.">
       <form onSubmit={onSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          {roles.map((r) => (
-            <label
-              key={r.value}
-              className={`cursor-pointer rounded-xl border p-3 text-sm ${
-                role === r.value ? 'border-green-600 bg-green-100' : 'border-muted/40'
-              }`}
-            >
-              <input
-                type="radio"
-                name="role"
-                value={r.value}
-                checked={role === r.value}
-                onChange={() => setRole(r.value)}
-                className="sr-only"
-              />
-              <span className="block font-semibold text-green-900">{r.title}</span>
-              <span className="text-muted">{r.text}</span>
-            </label>
-          ))}
-        </div>
+        <fieldset className="grid grid-cols-2 gap-3">
+          <legend className="sr-only">I am joining as a</legend>
+          {roles.map((r) => {
+            const active = role === r.value
+            const Icon = r.icon
+            return (
+              <label
+                key={r.value}
+                className={`cursor-pointer rounded-2xl border-2 p-4 text-sm transition has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-green-600/15 ${
+                  active ? 'border-green-600 bg-green-50' : 'border-green-100 bg-white hover:border-green-200'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="role"
+                  value={r.value}
+                  checked={active}
+                  onChange={() => setRole(r.value)}
+                  className="sr-only"
+                />
+                <span
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                    active ? 'bg-green-600 text-white' : 'bg-green-50 text-green-700'
+                  }`}
+                >
+                  <Icon size={20} aria-hidden="true" />
+                </span>
+                <span className="mt-3 block font-bold text-ink">{r.title}</span>
+                <span className="text-muted">{r.text}</span>
+              </label>
+            )
+          })}
+        </fieldset>
 
         <Field label="Full name" name="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" required />
         <Field label="Email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
@@ -96,7 +111,7 @@ export default function Register() {
           {busy ? 'Creating account…' : 'Create account'}
         </button>
 
-        <p className="text-center text-sm text-muted">
+        <p className="pt-2 text-center text-sm text-muted">
           Already have an account?{' '}
           <Link to="/login" className={linkText}>Log in</Link>
         </p>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import { api } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import type { Organization, Profile } from '../types'
 import { AuthContext, type AuthState } from './auth-context'
@@ -11,11 +12,12 @@ type Account = {
 }
 
 async function fetchAccount(userId: string): Promise<Account> {
-  const [p, o] = await Promise.all([
-    supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
-    supabase.from('organizations').select('*').eq('owner_id', userId).maybeSingle(),
-  ])
-  return { userId, profile: p.data, organization: o.data }
+  try {
+    const me = await api<{ profile: Profile | null; organization: Organization | null }>('/api/me')
+    return { userId, profile: me.profile, organization: me.organization }
+  } catch {
+    return { userId, profile: null, organization: null }
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

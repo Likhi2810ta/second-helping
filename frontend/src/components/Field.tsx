@@ -1,20 +1,22 @@
 import type { InputHTMLAttributes } from 'react'
+import { inputClass, labelClass } from '../lib/ui'
 
 type Props = InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }
 
 export default function Field({ label, hint, id, ...props }: Props) {
   const inputId = id ?? props.name
+  const hintId = hint && inputId ? `${inputId}-hint` : undefined
   return (
     <div>
-      <label htmlFor={inputId} className="block text-sm font-semibold text-green-900">
+      <label htmlFor={inputId} className={labelClass}>
         {label}
       </label>
-      <input
-        id={inputId}
-        {...props}
-        className="mt-1 w-full rounded-lg border border-muted/40 bg-white px-3 py-2 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-600/20"
-      />
-      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+      <input id={inputId} aria-describedby={hintId} {...props} className={inputClass} />
+      {hint && (
+        <p id={hintId} className="mt-1 text-xs text-muted">
+          {hint}
+        </p>
+      )}
     </div>
   )
 }

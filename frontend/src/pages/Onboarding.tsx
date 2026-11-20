@@ -1,11 +1,13 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
+import AuthCard from '../components/AuthCard'
 import Field from '../components/Field'
 import LocationPicker, { type LatLng } from '../components/LocationPicker'
 import { useProfile } from '../hooks/useProfile'
 import { reverseGeocode } from '../lib/geocode'
+import { api, messageOf } from '../lib/api'
 import { supabase } from '../lib/supabase'
-import { errorBox, primaryBtn } from '../lib/ui'
+import { errorBox, inputClass, labelClass, primaryBtn } from '../lib/ui'
 import type { Organization } from '../types'
 
 type OrgType = Organization['type']
@@ -110,17 +112,21 @@ export default function Onboarding() {
     }
 
     // 2. Create the organisation (status starts as "pending")
-    const { error: insertError } = await supabase.from('organizations').insert({
-      owner_id: user.id,
-      name: name.trim(),
-      type,
-      address: address.trim(),
-      location: `SRID=4326;POINT(${position.lng} ${position.lat})`,
-      doc_path: path,
-    })
-    if (insertError) {
+    try {
+      await api('/api/organizations', {
+        method: 'POST',
+        body: {
+          name: name.trim(),
+          type,
+          address: address.trim(),
+          lat: position.lat,
+          lng: position.lng,
+          doc_path: path,
+        },
+      })
+    } catch (e) {
       setBusy(false)
-      setError(insertError.message)
+      setError(messageOf(e))
       return
     }
 
@@ -129,18 +135,27 @@ export default function Onboarding() {
     navigate('/dashboard', { replace: true })
   }
 
-  return (
-    <main className="mx-auto max-w-xl p-4 sm:p-6">
-      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-green-100 sm:p-8">
-        <h1 className="text-2xl font-bold text-green-900">Set up your organisation</h1>
-        <p className="mt-1 text-sm text-muted">
-          {isDonor
-            ? 'Tell us where the food will be picked up from.'
-            : 'Tell us who will be collecting the food.'}{' '}
-          An admin checks your document before you can {isDonor ? 'post food' : 'request food'}.
-        </p>
+  const subtitle = `${
+    isDonor ? 'Tell us where the food will be picked up from.' : 'Tell us who will be collecting the food.'
+  } An admin checks your document before you can ${isDonor ? 'post food' : 'request food'}.`
 
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
+  return (
+    <AuthCard title="Set up your organisation" subtitle={subtitle} wide>
+      <ol className="mb-8 flex items-center gap-2 text-xs font-semibold" aria-label="Sign-up progress">
+        <li className="flex items-center gap-2 text-green-700">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-600 text-white">✓</span> Account
+        </li>
+        <li aria-hidden="true" className="h-px flex-1 bg-green-200" />
+        <li className="flex items-center gap-2 text-ink" aria-current="step">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-600 text-white ring-4 ring-green-100">2</span> Organisation
+        </li>
+        <li aria-hidden="true" className="h-px flex-1 bg-green-200" />
+        <li className="flex items-center gap-2 text-muted">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-700">3</span> Approval
+        </li>
+      </ol>
+
+        <form onSubmit={onSubmit} className="space-y-5">
           <Field
             label="Organisation name"
             name="orgName"
@@ -150,14 +165,14 @@ export default function Onboarding() {
           />
 
           <div>
-            <label htmlFor="orgType" className="block text-sm font-semibold text-green-900">
+            <label htmlFor="orgType" className={labelClass}>
               Type
             </label>
             <select
               id="orgType"
               value={type}
               onChange={(e) => setType(e.target.value as OrgType | '')}
-              className="mt-1 w-full rounded-lg border border-muted/40 bg-white px-3 py-2 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-600/20"
+              className={inputClass}
               required
             >
               <option value="">Choose…</option>
@@ -182,7 +197,7 @@ export default function Onboarding() {
           <LocationPicker value={position} onChange={handlePinChange} />
 
           <div>
-            <label htmlFor="doc" className="block text-sm font-semibold text-green-900">
+            <label htmlFor="doc" className={labelClass}>
               Verification document
             </label>
             <input
@@ -190,7 +205,7 @@ export default function Onboarding() {
               type="file"
               accept="image/jpeg,image/png,application/pdf"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="mt-1 block w-full text-sm file:mr-3 file:rounded-full file:border-0 file:bg-green-100 file:px-4 file:py-2 file:font-semibold file:text-green-900"
+              className="mt-1 block w-full text-sm file:mr-3 file:rounded-full file:border-0 file:bg-green-100 file:px-4 file:py-2 file:font-semibold file:text-green-900 hover:file:bg-green-200"
             />
             <p className="mt-1 text-xs text-muted">
               {isDonor
@@ -207,10 +222,9 @@ export default function Onboarding() {
           </button>
         </form>
 
-        <button onClick={signOut} className="mt-4 w-full text-center text-sm text-muted underline">
+        <button onClick={signOut} className="mt-4 w-full text-center text-sm text-muted underline-offset-4 hover:underline">
           Log out
         </button>
-      </div>
-    </main>
+    </AuthCard>
   )
 }

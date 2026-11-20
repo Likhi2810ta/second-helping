@@ -1,17 +1,14 @@
 import { Check } from 'lucide-react'
 
-const steps = ['Posted', 'Requested', 'Confirmed', 'Picked up']
-const position: Record<string, number> = { available: 0, requested: 1, confirmed: 2, picked_up: 3 }
+type StepperProps = { steps: string[]; current: number; label: string }
 
-export default function StatusStepper({ status }: { status: string }) {
-  const current = position[status]
-  if (current === undefined) return null
-
+// A row of numbered steps. Steps before `current` are ticked, `current` is highlighted.
+export function Stepper({ steps, current, label }: StepperProps) {
   return (
-    <ol className="mt-3 flex items-center gap-2" aria-label="Listing progress">
-      {steps.map((label, i) => (
+    <ol className="mt-3 flex items-center gap-2" aria-label={label}>
+      {steps.map((step, i) => (
         <li
-          key={label}
+          key={step}
           className="flex flex-1 items-center gap-2"
           aria-current={i === current ? 'step' : undefined}
         >
@@ -27,10 +24,20 @@ export default function StatusStepper({ status }: { status: string }) {
               i <= current ? 'font-semibold text-green-900' : 'text-muted'
             }`}
           >
-            {label}
+            {step}
           </span>
         </li>
       ))}
     </ol>
   )
+}
+
+const listingSteps = ['Posted', 'Requested', 'Confirmed', 'Picked up']
+const position: Record<string, number> = { available: 0, requested: 1, confirmed: 2, picked_up: 3 }
+
+// Progress of a listing, as the donor sees it
+export default function StatusStepper({ status }: { status: string }) {
+  const current = position[status]
+  if (current === undefined) return null
+  return <Stepper steps={listingSteps} current={current} label="Listing progress" />
 }

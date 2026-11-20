@@ -1,0 +1,18 @@
+# Never upload secrets or local-only files to Vercel
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Local caches and builds (Vercel installs and builds itself)
+**/node_modules
+**/.venv
+**/__pycache__
+**/.pytest_cache
+frontend/dist
+supabase/.temp
+
+# Not needed at runtime
+backend/tests

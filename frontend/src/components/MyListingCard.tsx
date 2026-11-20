@@ -1,21 +1,19 @@
 import { useState } from 'react'
-import { Star, UtensilsCrossed } from 'lucide-react'
+import { Star } from 'lucide-react'
 import CountdownBadge from './CountdownBadge'
 import FreshnessRing from './marketing/FreshnessRing'
 import StatusStepper from './StatusStepper'
 import type { MyListing, PickupRequestInfo } from '../hooks/useMyListings'
 import { useToast } from '../hooks/useToast'
 import { categoryLabels, dietLabels } from '../lib/labels'
+import { images } from '../lib/images'
 import { foodPhotoUrl } from '../lib/storage'
-import { supabase } from '../lib/supabase'
+import { outlinePill as outlineBtn, solidPill as solidBtn } from '../lib/ui'
+import { api, messageOf } from '../lib/api'
 import { freshness, shortTimeLabel, timeLeftLabel } from '../lib/time'
 
 type Props = { listing: MyListing; now: number; onChanged: () => void }
 
-const outlineBtn =
-  'rounded-full border border-green-600 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-100 disabled:opacity-60'
-const solidBtn =
-  'rounded-full bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60'
 
 // The request this listing is currently about (waiting, accepted, or finished)
 function currentRequest(listing: MyListing): PickupRequestInfo | undefined {
@@ -55,71 +53,61 @@ export default function MyListingCard({ listing, now, onChanged }: Props) {
 
   const request = currentRequest(listing)
   const receiver = request?.organizations?.name ?? 'A receiver'
-  const photo = foodPhotoUrl(listing.photo_path)
+  const photo = foodPhotoUrl(listing.photo_path) ?? images.categories[listing.category]
   const isOpen = ['available', 'requested', 'confirmed'].includes(listing.status)
 
   // Runs one action, then shows a message and refreshes the list
-  async function run(action: () => PromiseLike<{ error: { message: string } | null }>, success: string) {
+  async function run(action: () => Promise<unknown>, success: string) {
     setBusy(true)
-    const { error } = await action()
-    setBusy(false)
-    if (error) toast(error.message, 'error')
-    else toast(success)
-    onChanged()
+    try {
+      await action()
+      toast(success)
+    } catch (e) {
+      toast(messageOf(e), 'error')
+    } finally {
+      setBusy(false)
+      onChanged()
+    }
   }
 
-  async function withdraw() {
+  function withdraw() {
     if (!window.confirm('Withdraw this listing? It will disappear from the map.')) return
-    setBusy(true)
-    const { data, error } = await supabase
-      .from('listings')
-      .update({ status: 'cancelled' })
-      .eq('id', listing.id)
-      .eq('status', 'available')
-      .select('id')
-    setBusy(false)
-    if (error) toast(error.message, 'error')
-    else if (!data?.length) toast('This listing just changed. Please check its status.', 'error')
-    else toast('Listing withdrawn')
-    onChanged()
+    run(() => api(`/api/listings/${listing.id}/withdraw`, { method: 'POST' }), 'Listing withdrawn')
   }
 
   function accept() {
     if (!request) return
-    run(() => supabase.rpc('accept_request', { p_request: request.id }), 'Accepted. The receiver has been notified.')
+    run(
+      () => api(`/api/requests/${request.id}/accept`, { method: 'POST' }),
+      'Accepted. The receiver has been notified.'
+    )
   }
 
   function decline() {
     if (!request) return
-    run(() => supabase.rpc('decline_request', { p_request: request.id }), 'Declined. Your food is back on the map.')
+    run(
+      () => api(`/api/requests/${request.id}/decline`, { method: 'POST' }),
+      'Declined. Your food is back on the map.'
+    )
   }
 
   function complete() {
     if (!request) return
     run(
-      () => supabase.rpc('complete_request', { p_request: request.id, p_rating: rating ?? undefined }),
+      () => api(`/api/requests/${request.id}/complete`, { method: 'POST', body: { rating } }),
       'Marked as picked up. Thank you for sharing!'
     )
   }
 
   return (
-    <article className="overflow-hidden rounded-2xl bg-white ring-1 ring-green-100">
+    <article className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-green-100">
       <div className="flex gap-4 p-5">
-        {photo ? (
-          <img
-            src={photo}
-            alt={`Photo of ${listing.title}`}
-            loading="lazy"
-            className="h-24 w-24 shrink-0 rounded-xl object-cover"
-          />
-        ) : (
-          <div
-            className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-700"
-            aria-hidden="true"
-          >
-            <UtensilsCrossed size={30} />
-          </div>
-        )}
+        <img
+          src={photo}
+          alt={`Photo of ${listing.title}`}
+          loading="lazy"
+          className="h-24 w-24 shrink-0 rounded-2xl object-cover"
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
@@ -195,9 +183,31 @@ export default function MyListingCard({ listing, now, onChanged }: Props) {
 
       {/* Finished */}
       {listing.status === 'picked_up' && request?.status === 'completed' && (
-        <div className="border-t border-green-100 bg-green-100/50 p-5 text-sm text-green-900">
-          Picked up by <strong>{receiver}</strong>
-          {request.rating ? ` · rated ${request.rating} out of 5` : ''}
+        <div className="border-t border-green-100 bg-green-50/70 p-5 text-sm text-green-900">
+          <p>
+            Picked up by <strong>{receiver}</strong>
+            {request.rating ? ` · rated ${request.rating} out of 5` : ''}
+          </p>
+          {/* The receiver confirmed first, so the donor has not rated yet */}
+          {!request.rating && (
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <span className="text-muted">How did it go?</span>
+              <RatingPicker value={rating} onChange={setRating} />
+              <button
+                type="button"
+                onClick={() =>
+                  run(
+                    () => api(`/api/requests/${request.id}/complete`, { method: 'POST', body: { rating } }),
+                    'Thanks for the rating!'
+                  )
+                }
+                disabled={busy || rating === null}
+                className={solidBtn}
+              >
+                Save rating
+              </button>
+            </div>
+          )}
         </div>
       )}
 
